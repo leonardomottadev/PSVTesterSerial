@@ -11,6 +11,7 @@ namespace PSVTesterSerial
         private static MainRoutine? _instance;
         private static readonly Lock _lock = new();
         private readonly TaskManager<bool> mainRoutineTaskManager;
+        private const string PORT = "COM3";
 
         private MainRoutine()
         {
@@ -34,7 +35,6 @@ namespace PSVTesterSerial
             _instance = null;
         }
 
-
         public void Dispose()
         {
 
@@ -52,12 +52,32 @@ namespace PSVTesterSerial
 
         private async Task<bool> MainRoutineTask(CancellationToken cancellationToken)
         {
-            int i = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
-                Console.WriteLine($"Teste {i}");
+                if (SerialDevice.IsAvailable())
+                {
+                    Console.WriteLine($"{PORT} is open");
+                }
+                else
+                {
+                    try
+                    {
+                        bool started = await SerialDevice.Start(PORT);
+                        if (started)
+                        {
+                            Console.WriteLine("Starting device...");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Awaiting...");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error: {ex.Message}");
+                    }
+                }
                 await Task.Delay(1000, cancellationToken);
-                i++;
             }
             return false;
         }
