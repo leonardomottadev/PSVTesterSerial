@@ -17,6 +17,8 @@ namespace PSVTesterSerial
         public const int RxDataLength = 6 + (2 * MicrophoneSamples);
         public const int ReceiveMessageSize = 2064; // HeaderLength + RxDataLength + ChecksumLength +TailLength;
         public const int TransmitMessageSize = 8; // HeaderLength + TxDataLength + TailLength
+        public const int Tail = HeaderLength + RxDataLength + ChecksumLength;
+        public const int Checksum = HeaderLength + RxDataLength;
         private int crc32Ok;
         private int crc32NomOk;
 
@@ -30,9 +32,9 @@ namespace PSVTesterSerial
             if (message[0] == 0xFF && 
                 message[1] == 0xFF && 
                 message[2] == 0xFF &&
-                message[ReceiveMessageSize - 3] == 0x80 &&
-                message[ReceiveMessageSize - 2] == 0x80 &&
-                message[ReceiveMessageSize - 1] == 0x80)
+                message[Tail + 0] == 0x80 &&
+                message[Tail + 1] == 0x80 &&
+                message[Tail + 2] == 0x80)
             {
                 var data = new byte[RxDataLength];
                 Array.Copy(message, HeaderLength, data, 0, RxDataLength);
@@ -41,10 +43,10 @@ namespace PSVTesterSerial
 
                 var checksum = new byte[]
                 {
-                    message[ReceiveMessageSize - 7],
-                    message[ReceiveMessageSize - 6],
-                    message[ReceiveMessageSize - 5],
-                    message[ReceiveMessageSize - 4]
+                    message[Checksum + 0],
+                    message[Checksum + 1],
+                    message[Checksum + 2],
+                    message[Checksum + 3]
                 };
 
                 var checksum32 = BitConverter.ToUInt32(checksum, 0);
