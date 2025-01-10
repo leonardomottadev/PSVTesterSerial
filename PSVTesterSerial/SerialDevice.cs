@@ -119,8 +119,8 @@ namespace PSVTesterSerial
 
             SerialPort?.Write(buffer, 0, buffer.Length);
         }
-
-        public static void ReceiveMessage()
+        
+        public static byte[] ReceiveMessage()
         {
             int read;
             const int dataSize = SerialProtocol.ReceiveMessageSize;
@@ -128,7 +128,7 @@ namespace PSVTesterSerial
 
             if(IsSerialAvailable())
             {
-                if(SerialPort.BytesToRead >= dataSize)
+                if(SerialPort?.BytesToRead >= dataSize)
                 {
                     read = SerialPort.Read(buffer, 0, dataSize);
                 }
@@ -140,8 +140,9 @@ namespace PSVTesterSerial
                 }
                 Console.WriteLine();
 
-                SerialPort.BaseStream.Flush();
+                SerialPort?.BaseStream.Flush();
             }
+            return buffer;
         }
     }
 }

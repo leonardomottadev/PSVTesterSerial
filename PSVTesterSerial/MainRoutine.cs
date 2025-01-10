@@ -60,7 +60,16 @@ namespace PSVTesterSerial
                     {
                         Console.WriteLine($"{PORT} is open");
                         SerialDevice.SendMessage();
-                        SerialDevice.ReceiveMessage();
+                        var message = SerialDevice.ReceiveMessage();
+                        bool isValidMesage = SerialProtocol.ValidateMessage(message);
+                        if (isValidMesage)
+                        {
+                            Console.WriteLine("****VALID MESSAGE!****");
+                        } 
+                        else
+                        {
+                            Console.WriteLine("****INVALID MESSAGE!****");
+                        }
                     }
                     else if (await SerialDevice.Start(PORT))
                     {
@@ -76,7 +85,7 @@ namespace PSVTesterSerial
                     Console.WriteLine(ex.Message);
                 }
 
-                await Task.Delay(1000, cancellationToken);
+                await Task.Delay(5000, cancellationToken);
             }
             return false;
         }

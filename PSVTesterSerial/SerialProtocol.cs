@@ -19,5 +19,42 @@ namespace PSVTesterSerial
         public const int TransmitMessageSize = 8; // HeaderLength + TxDataLength + TailLength
         private int crc32Ok;
         private int crc32NomOk;
+
+        public static bool ValidateMessage(byte[] message)
+        {
+            if (message == null || message.Length < ReceiveMessageSize)
+            {
+                return false;
+            }
+
+            if (message[0] == 0xFF && 
+                message[1] == 0xFF && 
+                message[2] == 0xFF &&
+                message[ReceiveMessageSize - 3] == 0x80 &&
+                message[ReceiveMessageSize - 2] == 0x80 &&
+                message[ReceiveMessageSize - 1] == 0x80)
+            {
+                var data = new byte[RxDataLength];
+                Array.Copy(message, HeaderLength, data, 0, RxDataLength);
+
+                var crc32buffer = Force.Crc32.Crc32Algorithm.Compute(data);
+
+                var checksum = new byte[]
+                {
+                    message[ReceiveMessageSize - 7],
+                    message[ReceiveMessageSize - 6],
+                    message[ReceiveMessageSize - 5],
+                    message[ReceiveMessageSize - 4]
+                };
+
+                var checksum32 = BitConverter.ToUInt32(checksum, 0);
+
+                if(crc32buffer == checksum32)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
