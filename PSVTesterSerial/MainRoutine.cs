@@ -54,29 +54,26 @@ namespace PSVTesterSerial
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (SerialDevice.IsAvailable())
+                try
                 {
-                    Console.WriteLine($"{PORT} is open");
-                }
-                else
-                {
-                    try
+                    if (SerialDevice.IsAvailable())
                     {
-                        bool started = await SerialDevice.Start(PORT);
-                        if (started)
-                        {
-                            Console.WriteLine("Starting device...");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Awaiting...");
-                        }
+                        Console.WriteLine($"{PORT} is open");
                     }
-                    catch (Exception ex)
+                    else if (await SerialDevice.Start(PORT))
                     {
-                        Console.WriteLine($"Error: {ex.Message}");
+                        Console.WriteLine("Starting device...");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Awaiting...");
                     }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
                 await Task.Delay(1000, cancellationToken);
             }
             return false;

@@ -11,11 +11,13 @@ namespace PSVTesterSerial
     {
         private static SerialDevice? _instance;
         private static readonly Lock _lock = new();
-        private static readonly Lock serialLock = new();
 
         private static SerialPort? SerialPort { get; set; }
 
-        private SerialDevice() { }
+        private SerialDevice()
+        {
+            SerialPort = null;
+        }
 
         public static SerialDevice GetInstance()
         {
@@ -31,31 +33,58 @@ namespace PSVTesterSerial
             return SerialPort != null && SerialPort.IsOpen;
         }
 
-        public static Task<bool> Start(string port)
+        public static async Task<bool> Start(string port)
         {
-            List<string> AvailablePorts = new List<string>(SerialPort.GetPortNames().Distinct());
+            if (string.IsNullOrWhiteSpace(port))
+                return false;
 
-            if(AvailablePorts != null && AvailablePorts.Contains(port))
+            var availablePorts = SerialPort.GetPortNames().Distinct();
+
+            if (!availablePorts.Contains(port) || !IsPortFunctional(port))
+                return false;
+
+            SerialPort ??= new SerialPort(port, 500000)
             {
-                lock (serialLock) 
-                {
-                    SerialPort = new SerialPort(port, 500000)
-                    {
-                        ReadTimeout = 10
-                    };
-                    SerialPort.Open();
-                    SerialPort.BaseStream.Flush();
-                }
-                return Task.FromResult(true);
+                ReadTimeout = 10
+            };
+
+            if (SerialPort.IsOpen)
+                SerialPort.Close();
+
+            try
+            {
+                SerialPort.Open();
+                SerialPort.BaseStream.Flush();
+                await Task.Delay(100).ConfigureAwait(false);
             }
-            return Task.FromResult(false);
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error opening port {port}: {ex.Message}");
+            }
+
+            return true;
         }
 
         public static void Stop()
         {
-            if (IsAvailable()) 
+            if (IsAvailable())
             {
                 SerialPort?.Close();
+            }
+        }
+
+        private static bool IsPortFunctional(string port)
+        {
+            try
+            {
+                using var testPort = new SerialPort(port);
+                testPort.Open();
+                testPort.Close();
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
     }
