@@ -56,9 +56,11 @@ namespace PSVTesterSerial
             {
                 try
                 {
-                    if (SerialDevice.IsAvailable())
+                    if (SerialDevice.IsSerialAvailable())
                     {
                         Console.WriteLine($"{PORT} is open");
+                        SerialDevice.SendMessage();
+                        SerialDevice.ReceiveMessage();
                     }
                     else if (await SerialDevice.Start(PORT))
                     {
